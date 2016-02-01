@@ -1,0 +1,57 @@
+<canvas id="test" width="1800" height="3000"></canvas>
+
+<script>
+var canvas = document.getElementById("test");
+canvasWidth = canvas.width;
+canvasHeight = canvas.height;
+analyserContext = canvas.getContext('2d');
+
+
+
+console.log(canvasWidth)
+if (!navigator.getUserMedia)
+    navigator.getUserMedia = navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+if (!navigator.cancelAnimationFrame)
+    navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
+if (!navigator.requestAnimationFrame)
+    navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+var audioContext = new AudioContext();
+
+var hit = 100;
+function updateAnalysers(time) {
+
+  var freqByteData = new Uint8Array(analyserNode.frequencyBinCount);
+  analyserNode.getByteFrequencyData(freqByteData);
+  var data = freqByteData.slice(0, 1000)
+  analyserContext.clearRect(0, 0, canvasWidth, canvasHeight);
+  var barWid = 5;
+  data.forEach(function(val, index){
+    analyserContext.fillRect(index*barWid, 0, barWid, val)
+  })
+  window.requestAnimationFrame( updateAnalysers );
+}
+
+navigator.getUserMedia(
+{
+    "audio": {
+        "mandatory": {
+            "googEchoCancellation": "false",
+            "googAutoGainControl": "false",
+            "googNoiseSuppression": "false",
+            "googHighpassFilter": "false"
+        },
+        "optional": []
+    },
+}, function(stream) {
+    inputNode = audioContext.createMediaStreamSource(stream);
+    gainNode = audioContext.createGain();
+    analyserNode = audioContext.createAnalyser();
+    inputNode.connect(gainNode)
+    gainNode.connect(analyserNode)
+    updateAnalysers();
+}, function(e) {
+    alert('Error getting audio');
+    console.log(e);
+});
+</script>
